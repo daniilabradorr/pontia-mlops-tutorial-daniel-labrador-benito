@@ -1,6 +1,6 @@
 scikit-learn
 pandas
-
+fastapi
 joblib
 mlflow
 pytest
