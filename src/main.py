@@ -10,6 +10,8 @@ from src.data_loader import load_data, preprocess_data
 from src.evaluate import evaluate
 from src.model import train_model
 
+import os
+
 # Configurar logging (consola + archivo)
 logging.basicConfig(
     level=logging.INFO,
@@ -24,8 +26,8 @@ logger=logging.getLogger("adult-income")
 run_name = f"run-{datetime.now().strftime('%Y%m%d-%H%M%S')}"
 
 # MLflow config
-MLFLOW_URI = "http://localhost:5000"
-EXPERIMENT_NAME = "adult-income"
+MLFLOW_URI = os.getenv("MLFLOW_URL", "http://localhost:5000")
+EXPERIMENT_NAME = os.getenv("EXPERIMENT_NAME", "adult-income")
 
 mlflow.set_tracking_uri(MLFLOW_URI)
 mlflow.set_experiment(EXPERIMENT_NAME)
