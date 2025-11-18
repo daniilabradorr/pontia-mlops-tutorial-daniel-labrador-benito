@@ -41,3 +41,32 @@ Este repositorio contiene la solución al ejercicio de introducción a DevOps / 
 │       ├── build.yml
 │       └── deploy.yml
 └── requirements.txt      # Dependencias de entrenamiento
+```
+
+## Pipelines implementadas
+
+integration.yml: ejecuta los tests automáticos con pytest.
+
+build.yml: entrena el modelo, evalúa y registra en MLflow.
+
+deploy.yml: construye la imagen Docker y despliega en Azure.
+
+Todos los secretos como MLFLOW_URL, AZURE_CREDENTIALS, ACR_USERNAME, etc. están definidos en los Secrets de GitHub para mayor seguridad.
+
+## Despliegue en Azure
+
+El servicio se despliega como un contenedor Docker en Azure Container Instances. Se exponen dos endpoints:
+
+POST /predict: recibe un JSON y devuelve la clase predicha (>50K o <=50K).
+
+GET /metrics: expone métricas para Prometheus.
+
+Ejemplo de petición:
+
+curl -X POST "http://<IP_CONTAINER>/predict" \
+     -H "Content-Type: application/json" \
+     -d '{"data": [[39, "State-gov", 77516, "Bachelors", 13, "Never-married", "Adm-clerical", "Not-in-family", "White", "Male", 2174, 0, 40, "United-States"]]}'
+
+Respuesta:
+
+{"prediction": ["<=50K"]}
