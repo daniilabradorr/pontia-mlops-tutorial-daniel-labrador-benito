@@ -8,3 +8,6 @@ uvicorn
 pydantic
 numpy
 prometheus-client
+pytest
+httpx
+pytest-asyncio

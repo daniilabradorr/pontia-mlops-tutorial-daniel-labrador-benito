@@ -5,3 +5,11 @@ scikit-learn
 joblib
 pydantic
 prometheus-client
+pytest
+httpx
+pytest-asyncio
+pandas
+mlflow
+pytest
+httpx
+pytest-asyncio
