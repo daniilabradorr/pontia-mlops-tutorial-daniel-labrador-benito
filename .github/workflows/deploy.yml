@@ -1,6 +1,7 @@
 name: deploy
 on:
   workflow_dispatch:
+
 jobs:
   deploy-model:
     runs-on: ubuntu-latest
@@ -15,12 +16,15 @@ jobs:
       - uses: actions/setup-python@v4
         with:
           python-version: 3.10
+
       - name: Azure login
-        uses: azure/login@v1
+        uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+
       - name: Login to ACR
         run: az acr login --name ${{ secrets.ACR_NAME }} --username ${{ secrets.ACR_USERNAME }} --password ${{ secrets.ACR_PASSWORD }}
+
       - name: Download model from MLflow
         env:
           MLFLOW_URL: ${{ vars.MLFLOW_URL }}
@@ -30,10 +34,13 @@ jobs:
           pip install mlflow
           mkdir -p models
           mlflow models download -m "models:/${MODEL_NAME}@${MODEL_ALIAS}" -d models
+
       - name: Build Docker image
-        run: docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} -f Dockerfile .
+        run: docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }} -f deployment/Dockerfile .
+
       - name: Push Docker image
         run: docker push ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}:${{ github.sha }}
+
       - name: Deploy to Azure Container Instances
         run: |
           az container create \
@@ -47,8 +54,10 @@ jobs:
             --ports 8000 \
             --location ${{ env.AZURE_REGION }} \
             --environment-variables MODEL_NAME=${{ env.MODEL_NAME }} MODEL_ALIAS=${{ env.MODEL_ALIAS }}
+
       - name: Wait for deployment
         run: sleep 60
+
       - name: Test API endpoint
         run: |
           containerIP=$(az container show \
