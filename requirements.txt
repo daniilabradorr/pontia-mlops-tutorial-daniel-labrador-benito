@@ -4,3 +4,7 @@ fastapi
 joblib
 mlflow
 pytest
+uvicorn
+pydantic
+numpy
+prometheus-client
