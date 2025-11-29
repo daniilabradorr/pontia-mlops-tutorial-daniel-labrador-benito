@@ -64,9 +64,3 @@ docker-compose.override.yml
 *.key
 .envrc
 .env.*
-
-# --- Datos del proyecto  ---
-!data/raw/.gitkeep
-
-# --- Modelos entrenados---
-!models/.gitkeep
