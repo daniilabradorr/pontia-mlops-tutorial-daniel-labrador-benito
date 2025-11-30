@@ -1,36 +1,36 @@
-import mlflow
-from mlflow.tracking import MlflowClient
 import os
-from datetime import datetime
 from pathlib import Path
 
+import mlflow
+from mlflow.tracking import MlflowClient
 
 
-# Set the tracking URI if it's not the default
-mlflow.set_tracking_uri("http://localhost:5000")
+#MLflow desde variables de entorno
+MLFLOW_URL = os.environ["MLFLOW_URL"]
+EXPERIMENT_NAME = os.environ["EXPERIMENT_NAME"]
+RUN_ID = os.environ["RUN_ID"]
+MODEL_NAME = os.getenv("MODEL_NAME", "no_name")
 
+mlflow.set_tracking_uri(MLFLOW_URL)
+mlflow.set_experiment(EXPERIMENT_NAME)
 client = MlflowClient()
 
-# Replace with your actual run ID and model artifact path
-with open("run_id.txt", "r") as f:
-    run_id = f.read().strip()
-model_name =  os.getenv("MODEL_NAME", "no_name")
+# modelo dentro de los artefactos del run
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 MODEL_DIR = PROJECT_ROOT / "models"
 model_artifact_path = MODEL_DIR / "model.pkl"
 
-# Register the model
+#el modelo en MLflow
 result = mlflow.register_model(
-    model_uri=f"runs:/{run_id}/{model_artifact_path}",
-    name=model_name
+    model_uri=f"runs:/{RUN_ID}/{model_artifact_path}",
+    name=MODEL_NAME,
 )
 
-# Optionally, you can wait until the model is ready
+#el modelo a Staging y marcar alias "champion"
 client.transition_model_version_stage(
-    name=model_name,
+    name=MODEL_NAME,
     version=result.version,
-    stage="Staging"
+    stage="Staging",
 )
 
-
-client.set_registered_model_alias(model_name, "champion", result.version)
+client.set_registered_model_alias(MODEL_NAME, "champion", result.version)
