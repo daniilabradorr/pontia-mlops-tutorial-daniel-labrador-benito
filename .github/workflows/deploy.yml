@@ -8,13 +8,15 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
+      # Variables generales de la API (desde Variables del repo)
       MODEL_NAME: ${{ vars.MODEL_NAME }}
       MODEL_ALIAS: ${{ vars.MODEL_ALIAS }}
       IMAGE_NAME: ${{ vars.IMAGE_NAME }}
       AZURE_CONTAINER_NAME: ${{ vars.AZURE_CONTAINER_NAME }}
       AZURE_REGION: ${{ vars.AZURE_REGION }}
       MLFLOW_TRACKING_URI: ${{ vars.MLFLOW_URL }}
-      AZURE_STORAGE_CONNECTION_STRING_B64: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_B64 }}
+      AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+      MODEL_URI: models:/${{ vars.MODEL_NAME }}@${{ vars.MODEL_ALIAS }}
 
     steps:
       - name: Checkout repository
@@ -34,23 +36,13 @@ jobs:
         run: |
           az acr login --name ${{ secrets.ACR_NAME }}
 
-      - name: Set MODEL_URI
-        run: |
-          echo "MODEL_URI=models:/${{ env.MODEL_NAME }}@${{ env.MODEL_ALIAS }}" >> $GITHUB_ENV
-
-      - name: Decode Azure Storage connection string
-        run: |
-          echo "$AZURE_STORAGE_CONNECTION_STRING_B64" | base64 -d > storage.txt
-          export AZURE_STORAGE_CONNECTION_STRING="$(cat storage.txt)"
-          echo "AZURE_STORAGE_CONNECTION_STRING=$AZURE_STORAGE_CONNECTION_STRING" >> $GITHUB_ENV
-
       - name: Build Docker image
         run: |
-          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }} ./deployment
+          docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/"$IMAGE_NAME" ./deployment
 
       - name: Push Docker image
         run: |
-          docker push ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }}
+          docker push ${{ secrets.ACR_NAME }}.azurecr.io/"$IMAGE_NAME"
 
       - name: Deploy to Azure Container Instances
         run: |
