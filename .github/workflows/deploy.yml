@@ -63,26 +63,8 @@ jobs:
             --memory 2.0 \
             --location ${{ env.AZURE_REGION }}
       
-            - name: Wait and probe API
+      - name: Wait and probe API
         run: |
-          # Espera inicial más larga para que ACI baje la imagen y arranque el contenedor
-          echo "Waiting for container to start..."
           sleep 90
-
-          URL="http://${{ env.AZURE_CONTAINER_NAME }}-${{ github.run_id }}.${{ env.AZURE_REGION }}.azurecontainer.io:8080/health"
-          echo "Probing health endpoint at: $URL"
-
-          # Hasta 5 reintentos con espera entre ellos
-          for i in {1..5}; do
-            echo "Health check attempt $i..."
-            if curl --fail "$URL"; then
-              echo "API is up ✅"
-              exit 0
-            fi
-            echo "API not ready yet, waiting 15s..."
-            sleep 15
-          done
-
-          echo "❌ API did not become healthy in time"
-          exit 1
-
+          curl --fail http://$AZURE_CONTAINER_NAME-${{ github.run_id }}.${{ env.AZURE_REGION }}.azurecontainer.io:8080/health
+          
