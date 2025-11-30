@@ -14,7 +14,6 @@ jobs:
       IMAGE_NAME: ${{ vars.IMAGE_NAME }}
       AZURE_CONTAINER_NAME: ${{ vars.AZURE_CONTAINER_NAME }}
       AZURE_REGION: ${{ vars.AZURE_REGION }}
-      AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
 
     steps:
       - name: Checkout repository
@@ -64,7 +63,7 @@ jobs:
             --environment-variables \
               MODEL_URI=$MODEL_URI \
               MLFLOW_TRACKING_URI=${{ vars.MLFLOW_URL }} \
-              AZURE_STORAGE_CONNECTION_STRING=$AZURE_STORAGE_CONNECTION_STRING
+              AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}"
       
       - name: Wait and probe API
         run: |
