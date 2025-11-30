@@ -8,14 +8,13 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Variables generales de la API
       MODEL_NAME: ${{ vars.MODEL_NAME }}
       MODEL_ALIAS: ${{ vars.MODEL_ALIAS }}
       IMAGE_NAME: ${{ vars.IMAGE_NAME }}
       AZURE_CONTAINER_NAME: ${{ vars.AZURE_CONTAINER_NAME }}
       AZURE_REGION: ${{ vars.AZURE_REGION }}
       MLFLOW_TRACKING_URI: ${{ vars.MLFLOW_URL }}
-      AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
+      AZURE_STORAGE_CONNECTION_STRING_B64: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING_B64 }}
 
     steps:
       - name: Checkout repository
@@ -39,6 +38,12 @@ jobs:
         run: |
           echo "MODEL_URI=models:/${{ env.MODEL_NAME }}@${{ env.MODEL_ALIAS }}" >> $GITHUB_ENV
 
+      - name: Decode Azure Storage connection string
+        run: |
+          echo "$AZURE_STORAGE_CONNECTION_STRING_B64" | base64 -d > storage.txt
+          export AZURE_STORAGE_CONNECTION_STRING="$(cat storage.txt)"
+          echo "AZURE_STORAGE_CONNECTION_STRING=$AZURE_STORAGE_CONNECTION_STRING" >> $GITHUB_ENV
+
       - name: Build Docker image
         run: |
           docker build -t ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }} ./deployment
@@ -50,24 +55,24 @@ jobs:
       - name: Deploy to Azure Container Instances
         run: |
           az container create \
-            --name ${{ env.AZURE_CONTAINER_NAME }} \
-            --image ${{ secrets.ACR_NAME }}.azurecr.io/${{ env.IMAGE_NAME }} \
+            --name "$AZURE_CONTAINER_NAME" \
+            --image ${{ secrets.ACR_NAME }}.azurecr.io/"$IMAGE_NAME" \
             --resource-group ${{ secrets.AZURE_RESOURCE_GROUP }} \
             --registry-login-server ${{ secrets.ACR_NAME }}.azurecr.io \
             --registry-username ${{ secrets.ACR_USERNAME }} \
             --registry-password ${{ secrets.ACR_PASSWORD }} \
-            --dns-name-label ${{ env.AZURE_CONTAINER_NAME }}-${{ github.run_id }} \
+            --dns-name-label "$AZURE_CONTAINER_NAME"-${{ github.run_id }} \
             --ports 8080 \
             --os-type Linux \
             --cpu 1 \
             --memory 2.0 \
-            --location ${{ env.AZURE_REGION }} \
+            --location "$AZURE_REGION" \
             --environment-variables \
-              MODEL_URI=$MODEL_URI \
-              MLFLOW_TRACKING_URI=$MLFLOW_TRACKING_URI \
+              MODEL_URI="$MODEL_URI" \
+              MLFLOW_TRACKING_URI="$MLFLOW_TRACKING_URI" \
               AZURE_STORAGE_CONNECTION_STRING="$AZURE_STORAGE_CONNECTION_STRING"
 
       - name: Wait and probe API
         run: |
           sleep 90
-          curl --fail http://$AZURE_CONTAINER_NAME-${{ github.run_id }}.${{ env.AZURE_REGION }}.azurecontainer.io:8080/health
+          curl --fail http://$AZURE_CONTAINER_NAME-${{ github.run_id }}.$AZURE_REGION.azurecontainer.io:8080/health
