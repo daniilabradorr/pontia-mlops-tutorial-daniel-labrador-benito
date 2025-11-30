@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      # Variables de la API definidas en Settings → Variables
+      # Variables generales de la API
       MODEL_NAME: ${{ vars.MODEL_NAME }}
       MODEL_ALIAS: ${{ vars.MODEL_ALIAS }}
       IMAGE_NAME: ${{ vars.IMAGE_NAME }}
@@ -18,6 +18,7 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
+
 
       - name: Set up Python 3.10
         uses: actions/setup-python@v4
@@ -30,7 +31,8 @@ jobs:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
 
       - name: Login to ACR
-        run: az acr login --name ${{ secrets.ACR_NAME }}
+        run: |
+          az acr login --name ${{ secrets.ACR_NAME }}
 
       - name: Set MODEL_URI
         run: |
@@ -54,18 +56,15 @@ jobs:
             --registry-username ${{ secrets.ACR_USERNAME }} \
             --registry-password ${{ secrets.ACR_PASSWORD }} \
             --dns-name-label ${{ env.AZURE_CONTAINER_NAME }}-${{ github.run_id }} \
-            --environment-variables \
-              MODEL_URI="${{ env.MODEL_URI }}" \
-              MLFLOW_TRACKING_URI="${{ vars.MLFLOW_URL }}" \
-              AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
+            --environment-variables MODEL_URI="${{ env.MODEL_URI }}" MLFLOW_TRACKING_URI="${{ vars.MLFLOW_URL }}" AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
             --ports 8080 \
             --os-type Linux \
             --cpu 1 \
             --memory 2.0 \
             --location ${{ env.AZURE_REGION }}
-
+      
       - name: Wait and probe API
         run: |
-          # Espera para que el contenedor arranque y pruebe el endpoint /health
           sleep 90
-          curl --fail http://${{ env.AZURE_CONTAINER_NAME }}-${{ github.run_id }}.${{ env.AZURE_REGION }}.azurecontainer.io:8080/health
+          curl --fail http://$AZURE_CONTAINER_NAME-${{ github.run_id }}.${{ env.AZURE_REGION }}.azurecontainer.io:8080/health
+          
