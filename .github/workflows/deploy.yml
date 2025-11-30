@@ -60,7 +60,7 @@ jobs:
             --environment-variables \
               MODEL_URI=${{ env.MODEL_URI }} \
               MLFLOW_TRACKING_URI=${{ vars.MLFLOW_URL }} \
-              AZURE_STORAGE_CONNECTION_STRING=$AZURE_STORAGE_CONNECTION_STRING \
+              AZURE_STORAGE_CONNECTION_STRING=${{AZURE_STORAGE_CONNECTION_STRING}} \
             --ports 8080 \
             --os-type Linux \
             --cpu 1 \
